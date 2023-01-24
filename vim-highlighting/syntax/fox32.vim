@@ -18,11 +18,11 @@ syn match foxRegisters /\vr(3[01]|[12]?\d|sp)/
 
 syn match foxLabel /[_A-Za-z0-9]*:/
 
-syn keyword foxInstructions nop halt brk reti ret ise icl
-syn keyword foxInstructions inc dec not jmp call loop rjmp rcall rloop push pop int
-syn keyword foxInstructions add sub mul div rem and or xor sla sra srl rol ror bse bcl bts cmp movz mov rta in out
+syn keyword foxInstructions nop halt brk reti ret ise icl mse mcl
+syn keyword foxInstructions inc dec not jmp call loop rjmp rcall rloop push pop int tlb flp
+syn keyword foxInstructions add sub mul div rem imul idiv irem and or xor sla sra srl rol ror bse bcl bts cmp movz mov rta in out
 
-syn keyword foxConditions ifz ifnz ifc ifnc ifgteq ifgt iglteq iflt
+syn keyword foxConditions ifz ifnz ifc ifnc ifgteq ifgt iflteq iflt
 
 syn keyword foxData data
 
