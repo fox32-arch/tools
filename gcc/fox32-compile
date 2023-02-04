@@ -1,0 +1,170 @@
+#!/usr/bin/env python3
+# fox32-compile - fox32 compiler driver/wrapper
+
+import argparse, sys, subprocess, os, re, shutil
+
+def run(command_line):
+    print(f"Running command: {command_line}")
+    if code := subprocess.run(command_line).returncode:
+        sys.stderr.write(f"Command failed (exit status {code}): {command_line})\n")
+        sys.exit(1)
+
+class Flavor:
+    """
+    Compiler flavor base class. The compiler flavor determines where we look
+    for the compiler and how we invoke it.
+    """
+    @classmethod
+    def command_names(self):
+        raise Exception(f"Please implement command_names() in class {self.__name__}")
+
+    @classmethod
+    def invoke(self, command, c_file, s_file):
+        raise Exception(f"Please implement invoke() in class {self.__name__}")
+
+class GCC(Flavor):
+    basename = 'gcc'
+
+    def prefixes():
+        for bits in ['32', '64']:
+            yield f'riscv{bits}-linux-gnu-'
+
+    @classmethod
+    def command_names(self):
+        for p in self.prefixes():
+            yield p + self.basename
+
+    @classmethod
+    def invoke(self, command, c_file, s_file):
+        run([command, '-march=rv32im', '-mabi=ilp32', '-Os', '-S', c_file, '-o', s_file])
+
+class GPlusPlus(GCC):
+    basename = 'g++'
+
+class Clang(Flavor):
+    basename = 'clang'
+
+    @classmethod
+    def command_names(self):
+        yield self.basename
+
+    @classmethod
+    def invoke(self, command, c_file, s_file):
+        run([command, '-target', 'riscv32', '-Os', '-S', c_file, '-o', s_file])
+
+class ClangPlusPlus(Clang):
+    basename = 'clang++'
+
+class RustC(Flavor):
+    pass # TODO
+
+
+class Driver:
+    """
+    Main compiler driver. It finds the right compiler and invokes it
+    """
+
+    def __init__(self, argv0, args):
+        self.basename = os.path.basename(argv0)
+        self.args = args
+        self.flavors = self.determine_flavors()
+        self.c_files, self.asm_files = self.classify_inputs(args.INPUT)
+        self.output = self.determine_output()
+        self.rv2fox = os.path.dirname(argv0) + '/rv2fox'
+        self.fox32asm = 'fox32asm'
+
+    @staticmethod
+    def classify_inputs(inputs):
+        c = []
+        asm = []
+        for file in inputs:
+            if file.endswith('.c'):
+                c.append(file)
+            elif file.endswith('.asm'):
+                asm.append(file)
+            else:
+                sys.stderr.write(f"Can't classify filename '{file}'\n")
+                sys.exit(1)
+
+        if not c:
+            sys.stderr.write(f"No C/C++ input file provided. Can't continue.\n")
+            sys.exit(1)
+
+        if len(c) > 1:
+            sys.stderr.write(f"More than one C/C++ input file specified. This is currently not supported.\n")
+            sys.exit(1)
+
+        if asm:
+            sys.stderr.write(f"ASM files specified. This is not yet supported.\n")
+            sys.exit(1)
+
+        return c, asm
+
+    def determine_output(self):
+        if self.args.output:
+            out = self.args.output
+            if not out.endswith('.fxf') and not out.endswith('.bin'):
+                sys.stderr.write(f"Invalid output filename '{out}'. Must end with .fxf or .bin\n")
+                sys.exit(1)
+            return out
+        file = self.c_files[0]
+        if m := re.fullmatch(r'(.*)\.\w+', file):
+            return m.groups()[0] + '.fxf'
+
+    @staticmethod
+    def find_flavor(name):
+        match name:
+            case 'gcc': return [GCC]
+            case 'g++': return [GPlusPlus]
+            case 'clang': return [Clang]
+            case 'clang++': return [ClangPlusPlus]
+            case 'cc': return [GCC, Clang]
+            case 'c++': return [GPlusPlus, ClangPlusPlus]
+
+    def determine_flavors(self):
+        if self.args.flavor:
+            if not (flavors := self.find_flavor(self.args.flavor)):
+                sys.stderr.write(f"Specified flavor '{self.args.flavor}' is not supported.\n")
+                sys.exit(1)
+            return flavors
+
+        m = re.fullmatch(r'fox32-(.*)', self.basename)
+        if not m or not (flavors := self.find_flavor(*m.groups())):
+            sys.stderr.write(f"Program was invoked as {self.basename}, can't determine flavor.\n")
+            sys.stderr.write(f"Please use e.g. '--flavor gcc' or invoke fox32-gcc\n")
+            sys.exit(1)
+        return flavors
+
+    def determine_command(self):
+        for flavor in self.flavors:
+            for command_name in flavor.command_names():
+                if shutil.which(command_name):
+                    return flavor, command_name
+        sys.stderr.write(f"No suitable compiler found.\n")
+        sys.exit(1)
+
+    def compile(self):
+        flavor, command = self.determine_command()
+        main_asm_files = []
+        for c_file in self.c_files:
+            s_file = c_file + '.tmp.s'
+            asm_file = c_file + '.tmp.asm'
+            flavor.invoke(command, c_file, s_file)
+            run([self.rv2fox, s_file, '-o', asm_file])
+            main_asm_files.append(asm_file)
+
+        command_line = [self.fox32asm, main_asm_files[0], self.output]
+        if self.args.start_file:
+            command_line += ['--start-file', self.args.start_file]
+        run(command_line)
+
+
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser(description='fox32 compiler driver')
+    parser.add_argument('INPUT', nargs='+', help='Inputs: .c/.cpp and .asm files')
+    parser.add_argument('--output', '-o', help='Output file (.fxf or .bin)')
+    parser.add_argument('--flavor', help='Flavor, i.e. gcc, g++, clang, etc.')
+    parser.add_argument('--start-file', help='Start file to use instead of start.asm')
+    args = parser.parse_args()
+    driver = Driver(sys.argv[0], args)
+    driver.compile()

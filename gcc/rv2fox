@@ -1,0 +1,305 @@
+#!/usr/bin/env python3
+# RISC-V assembly to fox32 translator
+import argparse
+import re
+
+class Emitter:
+    """
+    The Emitter class emits fox32 assembly code.
+    """
+
+    def __init__(self, filename):
+        self.filename = filename
+        self.f = open(filename, 'w')
+
+    def write(self, line):
+        self.f.write(line + '\n')
+
+    @staticmethod
+    def _adjust_label(label):
+        """
+        Adjust a label to the requirements of fox32asm
+        """
+        l = label.replace('.', '_')
+        if l.startswith('_'):
+            return 'U' + l[1:]
+        return l
+
+    @staticmethod
+    def _adjust_operand(op):
+        """
+        Adjust an operand to the requirements of fox32asm
+        """
+        if re.fullmatch(r'-?[0-9]x?[0-9a-fA-F]*', op):
+            return f'{int(op, 0) & 0xffffffff:#x}'
+        return op
+
+    def insn(self, operation, *operands):
+        """
+        Emit an instruction
+        """
+        line = '\t' + operation
+        if operands:
+            line += '\t' + ', '.join([self._adjust_operand(op) for op in operands])
+        self.write(line)
+
+    def include(self, filename):
+        """
+        Emit an #include directive
+        """
+        self.write(f'#include "{filename}"')
+
+    def comment(self, line):
+        """
+        Emit a comment
+        """
+        self.write(f'; {line}')
+
+    def label(self, label):
+        """
+        Emit a label definition
+        """
+        self.write(self._adjust_label(label) + ':')
+
+    def data(self, *data, size=32):
+        """
+        Emit data
+        """
+        for d in data:
+            self.write(f'data.{size} {d}')
+
+    def nop(self):
+        """
+        Emit a nop instruction
+        """
+        self.insn('nop')
+
+    def jump(self, label, condition=''):
+        """
+        Emit a jump to a label, optionally with a condition code
+        """
+        label = self._adjust_label(label)
+        if condition:
+            self.insn(f'{condition} rjmp', label)
+        else:
+            self.insn('rjmp', label)
+
+    def jump_reg(self, reg):
+        """
+        Emit a jump to a register
+        """
+        self.insn('jmp', reg)
+
+    def mov(self, dest, source, size=32):
+        """
+        Emit a mov instruction
+        """
+        self.insn(f'movz.{size}', dest, source)
+
+    def store(self, rmem, rval, size=32):
+        """
+        Emit a mov instruction that performs a memory store
+        """
+        self.mov(f'[{rmem}]', rval, size)
+
+    def load(self, rmem, rval, size=32):
+        """
+        Emit a mov instruction that performs a memory load
+        """
+        self.mov(rval, f'[{rmem}]', size)
+
+
+class Converter:
+    """
+    This class converts RISC-V assembly code to fox32 assembly code
+    """
+    def __init__(self, input, output, *, debug=False, start_file='start.asm', additional_includes=[]):
+        self.input_file = open(input, 'r')
+        self.e = Emitter(output)
+
+        self.debug = debug
+        self.start_file = start_file
+        self.additional_includes = additional_includes
+
+        self.xregs = ['x{n}' for n in range(32)]    # TODO: map all registers, consider calling conventions
+        self.regs = ['zero', 'ra', 'sp', 'gp', 'tp']
+        self.regs += [f't{n}' for n in range(3)]
+        self.regs += [f's{n}' for n in range(2)]
+        self.regs += [f'a{n}' for n in range(8)]
+        self.regidx = { r: i for i, r in enumerate(self.regs) }
+
+        self.tmp = 'r0' # temporary register
+        self.branches = ['bge', 'blt', 'ble', 'bne']
+
+        self.label_gen = iter(range(1000000))
+
+    def unique_label(self):
+        return f'rv2fox_{(next(self.label_gen))}'
+
+    @staticmethod
+    def ldst_to_size(insn):
+        size_map = {
+                'lb': 8, 'lh': 16, 'lw': 32,
+                'sb': 8, 'sh': 16, 'sw': 32,
+        }
+        if insn in size_map:
+            return size_map[insn]
+
+    def ldst(self, insn, rval, rbase, offset):
+        size = self.ldst_to_size(insn)
+        if int(offset, 0) != 0:
+            self.e.mov(self.tmp, rbase)
+            self.e.insn('add', self.tmp, offset)
+            rmem = self.tmp
+        else:
+            rmem = rbase
+        if insn.startswith('s'):
+            self.e.store(rmem, rval, size)
+        else:
+            self.e.load(rmem, rval, size)
+
+    def convert_directive(self, line):
+        if line in ['text', 'data']:
+            pass # ignore
+        elif m := re.fullmatch(r'word\s+([^\s]+)', line):
+            self.e.data(*m.groups())
+
+    def reg(self, reg):
+        """
+        Convert a RISC-V register to a fox32 register
+        """
+        if reg == 'sp':
+            return 'rsp'
+        elif reg in self.regidx:
+            return f'r{self.regidx[reg]}'
+        else:
+            raise Exception(f'Unknown register {reg}')
+
+    @staticmethod
+    def convert_arithmetic_op(op):
+        if op in ['add', 'addi']: return 'add'
+        if op in ['sll', 'slli']: return 'sla'
+        else:
+            raise Exception(f'Unknown op {op}')
+
+    @staticmethod
+    def convert_condition(op):
+        if op in ['blt']: return 'iflt', False
+        if op in ['bne', 'bnez']: return 'ifnz', False
+        if op in ['ble']: return 'ifgt', True
+
+    def convert_branch(self, insn, rs1, rs2, label):
+        cond, reverse = self.convert_condition(insn)
+        if reverse:
+            rs1, rs2 = rs2, rs1
+        self.e.insn('cmp', self.reg(rs1), self.reg(rs2))
+        self.e.jump(label, cond)
+
+    def convert_branch_imm(self, insn, rs, label, imm):
+        cond, reverse = self.convert_condition(insn)
+        if reverse:
+            rs1, rs2 = rs2, rs1
+        self.e.insn('cmp', self.reg(rs), str(imm))
+        self.e.jump(label, cond)
+
+    @staticmethod
+    def iter_operands(operands):
+        if operands:
+            for op in operands.split(','):
+                op = op.strip()
+                if op != '':
+                    yield op
+
+    def convert_insn(self, insn, operands=None):
+        tmp = self.tmp
+        operands = list(self.iter_operands(operands))
+
+        if insn == 'nop':
+            self.e.nop()
+        elif insn in ['addi', 'slli']:
+            rd, rs, imm = operands
+            op = self.convert_arithmetic_op(insn)
+            if rd == rs:
+                self.e.insn(op, self.reg(rd), imm)
+            else:
+                self.e.mov(tmp, self.reg(rs))
+                self.e.insn(op, tmp, imm)
+                self.e.mov(self.reg(rd), tmp)
+        elif insn in ['add']:
+            rd, rs1, rs2 = operands
+            if rd == rs1:
+                op = self.convert_arithmetic_op(insn)
+                self.e.insn(op, self.reg(rd), self.reg(rs2))
+            else:
+                op = self.convert_arithmetic_op(insn)
+                self.e.mov(tmp, self.reg(rs1))
+                self.e.insn(op, tmp, self.reg(rs2))
+                self.e.mov(self.reg(rd), tmp)
+        elif insn in ['sw', 'lw']:
+            rval, address = operands
+            offset, rbase = re.fullmatch(r'(-?[0-9]+)\(([a-z0-9]+)\)', address).groups()
+            self.ldst(insn, self.reg(rval), self.reg(rbase), offset)
+        elif insn in ['j']:
+            self.e.jump(*operands)
+        elif insn in ['jr']:
+            self.e.jump_reg(self.reg(*operands))
+        elif insn in ['ret']:
+            self.e.jump_reg(self.reg('ra'))
+        elif insn in ['lla']:
+            rd, label = operands
+            self.e.rta(self.reg(rd), label)
+        elif insn in ['mv']:
+            rd, rs = operands
+            self.e.mov(self.reg(rd), self.reg(rs))
+        elif insn in ['call']:
+            label = self.unique_label()
+            self.e.mov(self.reg('ra'), label)
+            self.e.jump(*operands)
+            self.e.label(label)
+        elif insn in self.branches:
+            self.convert_branch(insn, *operands)
+        elif insn in ['bnez']:
+            self.convert_branch_imm(insn, *operands, 0)
+        elif insn in ['li']:
+            rd, imm = operands
+            self.e.mov(self.reg(rd), imm)
+        elif insn in ['lui']:
+            rd, imm = operands
+            self.e.mov(self.reg(rd), str(int(imm, 0) << 12))
+        else:
+            raise Exception(f'Unknown instruction {insn} {operands}')
+
+    def convert(self):
+        self.e.comment(f'Generated with rv2fox')
+
+        self.e.include(self.start_file)
+        for file in self.additional_includes:
+            self.e.include(file)
+
+        for i, line in enumerate(self.input_file):
+            num = i + 1
+            line = line.strip()
+
+            if self.debug:
+                self.e.write(f'\t; {line}')
+
+            if line == '' or re.fullmatch(r'#.*', line):
+                pass
+            elif re.fullmatch(r'\.[a-z]+.*', line):
+                self.convert_directive(line[1:])
+            elif m := re.fullmatch(r'([a-zA-Z0-9_.]+):', line):
+                self.e.label(*m.groups())
+            elif m := re.fullmatch(r'([a-z]+)', line) or \
+                      re.fullmatch(r'([a-z]+)\s+([^\s].*)', line):
+                self.convert_insn(*m.groups())
+            else:
+                raise Exception(f'Unknown line: {line}')
+
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser(description='Convert RISC-V assembly to fox32 assembly')
+    parser.add_argument('input', help='RISC-V input')
+    parser.add_argument('-o', '--output', help='fox32 output')
+    parser.add_argument('--debug', help='produce verbose output to allow debugging this tool', action='store_true')
+    args = parser.parse_args()
+    c = Converter(args.input, args.output, debug=args.debug)
+    c.convert()
