@@ -255,7 +255,7 @@ class Converter:
 
         if insn == 'nop':
             self.e.nop()
-        elif insn in ['addi', 'subi' 'div', 'rem', 'andi', 'ori', 'xori', 'slli', 'srli']:
+        elif insn in ['addi', 'subi', 'div', 'rem', 'andi', 'ori', 'xori', 'slli', 'srli']:
             rd, rs, imm = operands
             op = self.convert_arithmetic_op(insn)
             if rd == rs:
