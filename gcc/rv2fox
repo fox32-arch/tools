@@ -108,6 +108,12 @@ class Emitter:
         """
         self.mov(rval, f'[{rmem}]', size)
 
+    def rta(self, dest, source):
+        """
+        Emit an rta instruction
+        """
+        self.insn(f'rta', dest, source)
+
 
 class Converter:
     """
