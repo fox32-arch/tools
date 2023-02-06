@@ -68,6 +68,13 @@ class Emitter:
         for d in data:
             self.write(f'data.{size} {d}')
 
+    def strz(self, *data):
+        """
+        Emit null-terminated string
+        """
+        for d in data:
+            self.write(f'data.strz \"{d}\"')
+
     def nop(self):
         """
         Emit a nop instruction
@@ -170,6 +177,8 @@ class Converter:
             pass # ignore
         elif m := re.fullmatch(r'word\s+([^\s]+)', line):
             self.e.data(*m.groups())
+        elif m := re.fullmatch(r'string\s+\"(.*)\"', line):
+            self.e.strz(*m.groups())
 
     def reg(self, reg):
         """
