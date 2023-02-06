@@ -119,6 +119,7 @@ class Emitter:
         """
         Emit an rta instruction
         """
+        source = self._adjust_label(source)
         self.insn(f'rta', dest, source)
 
 
