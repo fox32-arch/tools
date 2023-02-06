@@ -121,12 +121,13 @@ class Converter:
         self.start_file = start_file
         self.additional_includes = additional_includes
 
-        self.xregs = ['x{n}' for n in range(32)]    # TODO: map all registers, consider calling conventions
+        self.xregs = [f'x{n}' for n in range(32)]
         self.regs = ['zero', 'ra', 'sp', 'gp', 'tp']
         self.regs += [f't{n}' for n in range(3)]
         self.regs += [f's{n}' for n in range(2)]
         self.regs += [f'a{n}' for n in range(8)]
         self.regidx = { r: i for i, r in enumerate(self.regs) }
+        self.xregidx = { r: i for i, r in enumerate(self.xregs) }
 
         self.tmp = 'r0' # temporary register
         self.branches = ['bge', 'blt', 'ble', 'bne']
@@ -172,6 +173,8 @@ class Converter:
             return 'rsp'
         elif reg in self.regidx:
             return f'r{self.regidx[reg]}'
+        elif reg in self.xregidx:
+            return f'r{self.xregidx[reg]}'
         else:
             raise Exception(f'Unknown register {reg}')
 
