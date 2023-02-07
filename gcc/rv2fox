@@ -167,6 +167,7 @@ class Converter:
     def ldst_to_size(insn):
         size_map = {
                 'lb': 8, 'lh': 16, 'lw': 32,
+                'lbu': 8, 'lhu': 16,
                 'sb': 8, 'sh': 16, 'sw': 32,
         }
         if insn in size_map:
@@ -283,7 +284,7 @@ class Converter:
                 self.e.mov(tmp, self.reg(rs1))
                 self.e.insn(op, tmp, self.reg(rs2))
                 self.e.mov(self.reg(rd), tmp)
-        elif insn in ['sw', 'lw']:
+        elif insn in ['sw', 'lw', 'sh', 'lh', 'lhu', 'sb', 'lb', 'lbu']:
             rval, address = operands
             offset, rbase = re.fullmatch(r'(-?[0-9]+)\(([a-z0-9]+)\)', address).groups()
             self.ldst(insn, self.reg(rval), self.reg(rbase), offset)
