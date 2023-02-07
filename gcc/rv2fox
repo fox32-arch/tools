@@ -157,7 +157,7 @@ class Converter:
         self.regidx = { r: i for i, r in enumerate(self.regs) }
         self.xregidx = { r: i for i, r in enumerate(self.xregs) }
 
-        self.tmp = 'r0' # temporary register
+        self.tmp = 'rfp' # temporary register
         self.branches = ['bge', 'bgeu', 'blt', 'bltu', 'ble', 'bleu', 'bne', 'bneu']
 
         self.label_gen = iter(range(1000000))
