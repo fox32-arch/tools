@@ -152,6 +152,8 @@ class Converter:
         self.regs += [f't{n}' for n in range(3)]
         self.regs += [f's{n}' for n in range(2)]
         self.regs += [f'a{n}' for n in range(8)]
+        self.regs += [f's{n}' for n in range(2, 12)]
+        self.regs += [f't{n}' for n in range(3, 7)]
         self.regidx = { r: i for i, r in enumerate(self.regs) }
         self.xregidx = { r: i for i, r in enumerate(self.xregs) }
 
