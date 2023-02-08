@@ -193,7 +193,11 @@ class Converter:
             pass # ignore
         elif m := re.fullmatch(r'word\s+([^\s]+)', line):
             self.e.data(*m.groups())
+        elif m := re.fullmatch(r'4byte\s+([^\s]+)', line):
+            self.e.data(*m.groups())
         elif m := re.fullmatch(r'zero\s+([^\s]+)', line):
+            self.e.zero(*m.groups())
+        elif m := re.fullmatch(r'byte\s+([^\s]+)', line):
             self.e.zero(*m.groups())
         elif m := re.fullmatch(r'string\s+\"(.*)\"', line):
             self.e.strz(*m.groups())
@@ -341,7 +345,7 @@ class Converter:
 
             if line == '' or re.fullmatch(r'#.*', line):
                 pass
-            elif re.fullmatch(r'\.[a-z]+.*', line):
+            elif re.fullmatch(r'\.[a-z0-9]+.*', line):
                 self.convert_directive(line[1:])
             elif m := re.fullmatch(r'([a-zA-Z0-9_.]+):', line):
                 self.e.label(*m.groups())
