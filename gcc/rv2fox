@@ -283,7 +283,7 @@ class Converter:
                 self.e.mov(tmp, self.reg(rs))
                 self.e.insn(op, tmp, imm)
                 self.e.mov(self.reg(rd), tmp)
-        elif insn in ['add', 'sub', 'mul', 'divu', 'remu', 'and', 'nor', 'xor', 'sll', 'srl']:
+        elif insn in ['add', 'sub', 'mul', 'divu', 'remu', 'and', 'or', 'nor', 'xor', 'sll', 'srl']:
             rd, rs1, rs2 = operands
             if rd == rs1:
                 op = self.convert_arithmetic_op(insn)
