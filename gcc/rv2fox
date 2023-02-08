@@ -158,7 +158,7 @@ class Converter:
         self.xregidx = { r: i for i, r in enumerate(self.xregs) }
 
         self.tmp = 'rfp' # temporary register
-        self.branches = ['bge', 'bgeu', 'bgt', 'bgtu', 'blt', 'bltu', 'ble', 'bleu', 'bne', 'bneu']
+        self.branches = ['bge', 'bgeu', 'bgt', 'bgtu', 'blt', 'bltu', 'ble', 'bleu', 'bne', 'bneu', 'beq']
 
         self.label_gen = iter(range(1000000))
 
@@ -242,6 +242,7 @@ class Converter:
     def convert_condition(op):
         if op in ['blt', 'bltu']: return 'iflt', False
         if op in ['bne', 'bnez']: return 'ifnz', False
+        if op in ['beq', 'beqz']: return 'ifz', False
         if op in ['ble', 'bleu']: return 'ifgt', True
         if op in ['bge', 'bgeu']: return 'ifgteq', False
         if op in ['bgt', 'bgtu']: return 'ifgt', False
