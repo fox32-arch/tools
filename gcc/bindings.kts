@@ -7,11 +7,11 @@ class Type(val name: String) {
 
 val None = Type("void")
 val Byte = Type("unsigned char")
-val IByte = Type("signed char")
+val IByte = Type("char")
 val Half = Type("unsigned short")
-val IHalf = Type("signed short")
+val IHalf = Type("short")
 val Word = Type("unsigned int")
-val IWord = Type("signed int")
+val IWord = Type("int")
 
 class Variable(val type: Type, val name: String)
 
@@ -202,7 +202,7 @@ define(0xF0042000U, "fill_background") {
     parameter(Word, "color")
 }
 define(0xF0042004U, "draw_str_to_background") {
-    parameter(Byte.ref, "str")
+    parameter(IByte.ref, "str")
     parameter(Half, "x")
     parameter(Half, "y")
     parameter(Word, "foreground_color")
@@ -210,7 +210,7 @@ define(0xF0042004U, "draw_str_to_background") {
     returns(1, Half)
 }
 define(0xF0042008U, "draw_format_str_to_background") {
-    parameter(Byte.ref, "str")
+    parameter(IByte.ref, "str")
     parameter(Half, "x")
     parameter(Half, "y")
     parameter(Word, "foreground_color")
@@ -271,7 +271,7 @@ define(0xF0043000U, "fill_overlay") {
     parameter(Byte, "overlay_number")
 }
 define(0xF0043004U, "draw_str_to_overlay") {
-    parameter(Byte.ref, "str")
+    parameter(IByte.ref, "str")
     parameter(Half, "x")
     parameter(Half, "y")
     parameter(Word, "foreground_color")
@@ -280,7 +280,7 @@ define(0xF0043004U, "draw_str_to_overlay") {
     returns(1, Half)
 }
 define(0xF0043008U, "draw_format_str_to_overlay") {
-    parameter(Byte.ref, "str")
+    parameter(IByte.ref, "str")
     parameter(Half, "x")
     parameter(Half, "y")
     parameter(Word, "foreground_color")
@@ -484,6 +484,8 @@ define(0x00000A20U, "get_unused_task_id") {
 }
 define(0x00000A24U, "is_task_id_used") {
 }
+define(0x00000A28U, "save_state_and_yield_task") {
+}
 
 comment("memory jump table")
 
@@ -496,7 +498,7 @@ comment("window jump table")
 
 define(0x00000C10U, "new_window") {
     parameter(Byte.ref, "window_struct")
-    parameter(Byte.ref, "title_str")
+    parameter(IByte.ref, "title_str")
     parameter(Half, "width")
     parameter(Half, "height")
     parameter(Half, "x")

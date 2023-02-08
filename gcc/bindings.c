@@ -111,7 +111,7 @@ static inline void fill_background(
 }
 
 static inline unsigned short draw_str_to_background(
-    unsigned char* str,
+    char* str,
     unsigned short x,
     unsigned short y,
     unsigned int foreground_color,
@@ -129,7 +129,7 @@ static inline unsigned short draw_str_to_background(
 }
 
 static inline unsigned short draw_format_str_to_background(
-    unsigned char* str,
+    char* str,
     unsigned short x,
     unsigned short y,
     unsigned int foreground_color,
@@ -258,7 +258,7 @@ static inline void fill_overlay(
 }
 
 static inline unsigned short draw_str_to_overlay(
-    unsigned char* str,
+    char* str,
     unsigned short x,
     unsigned short y,
     unsigned int foreground_color,
@@ -278,7 +278,7 @@ static inline unsigned short draw_str_to_overlay(
 }
 
 static inline unsigned short draw_format_str_to_overlay(
-    unsigned char* str,
+    char* str,
     unsigned short x,
     unsigned short y,
     unsigned int foreground_color,
@@ -663,6 +663,10 @@ static inline void is_task_id_used(void) {
     call(0x00000A24);
 }
 
+static inline void save_state_and_yield_task(void) {
+    call(0x00000A28);
+}
+
 // memory jump table
 
 static inline void allocate_memory(void) {
@@ -677,7 +681,7 @@ static inline void free_memory(void) {
 
 static inline void new_window(
     unsigned char* window_struct,
-    unsigned char* title_str,
+    char* title_str,
     unsigned short width,
     unsigned short height,
     unsigned short x,
