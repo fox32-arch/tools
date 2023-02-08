@@ -34,6 +34,9 @@ class Function(val address: UInt, val name: String) {
     fun returns(index: Int, type: Type) {
         returns[index] = Variable(type, "result_${index}", false)
     }
+    fun returnstruct(suffix: String, type: Type) {
+        returnstruct(returns.indexOfFirst { it == null }, suffix, type)
+    }
     fun returnstruct(index: Int, suffix: String, type: Type) {
         returns[index] = Variable(type, "result_0.${suffix}", true)
     }
@@ -166,9 +169,9 @@ comment("fox32rom definitions")
 comment("system jump table")
 
 define(0xF0040000U, "get_rom_version") {
-    returnstruct(0, "return0", Type("struct return3"))
-    returnstruct(1, "return1", Type("struct return3"))
-    returnstruct(2, "return2", Type("struct return3"))
+    returnstruct("return0", Type("struct return3"))
+    returnstruct("return1", Type("struct return3"))
+    returnstruct("return2", Type("struct return3"))
 }
 define(0xF0040004U, "system_vsync_handler") {
 }
@@ -534,6 +537,15 @@ define(0x00000C14U, "destroy_window") {
 define(0x00000C18U, "new_window_event") {
 }
 define(0x00000C1CU, "get_next_window_event") {
+    parameter(Byte.ref, "window_struct")
+    returnstruct("return0", Type("struct return8"))
+    returnstruct("return1", Type("struct return8"))
+    returnstruct("return2", Type("struct return8"))
+    returnstruct("return3", Type("struct return8"))
+    returnstruct("return4", Type("struct return8"))
+    returnstruct("return5", Type("struct return8"))
+    returnstruct("return6", Type("struct return8"))
+    returnstruct("return7", Type("struct return8"))
 }
 define(0x00000C20U, "draw_title_bar_to_window") {
     parameter(Byte.ref, "window_struct")

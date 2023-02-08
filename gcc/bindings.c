@@ -724,8 +724,21 @@ static inline void new_window_event(void) {
     call(0x00000C18);
 }
 
-static inline void get_next_window_event(void) {
+static inline struct return8 get_next_window_event(
+    unsigned char* window_struct
+) {
+    struct return8 result_0;
+    parameter(0, window_struct);
     call(0x00000C1C);
+    ret(0, result_0.return0);
+    ret(1, result_0.return1);
+    ret(2, result_0.return2);
+    ret(3, result_0.return3);
+    ret(4, result_0.return4);
+    ret(5, result_0.return5);
+    ret(6, result_0.return6);
+    ret(7, result_0.return7);
+    return result_0;
 }
 
 static inline void draw_title_bar_to_window(
