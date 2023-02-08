@@ -3,12 +3,25 @@
 
 #include "call.h"
 
+struct return2 { unsigned int return0; unsigned int return1; };
+struct return3 { unsigned int return0; unsigned int return1; unsigned int return2; };
+struct return4 { unsigned int return0; unsigned int return1; unsigned int return2; unsigned int return3; };
+struct return5 { unsigned int return0; unsigned int return1; unsigned int return2; unsigned int return3; unsigned int return4; };
+struct return6 { unsigned int return0; unsigned int return1; unsigned int return2; unsigned int return3; unsigned int return4; unsigned int return5; };
+struct return7 { unsigned int return0; unsigned int return1; unsigned int return2; unsigned int return3; unsigned int return4; unsigned int return5; unsigned int return6; };
+struct return8 { unsigned int return0; unsigned int return1; unsigned int return2; unsigned int return3; unsigned int return4; unsigned int return5; unsigned int return6; unsigned int return7; };
+
 // fox32rom definitions
 
 // system jump table
 
-static inline void get_rom_version(void) {
+static inline struct return3 get_rom_version(void) {
+    struct return3 result_0;
     call(0xF0040000);
+    ret(0, result_0.return0);
+    ret(1, result_0.return1);
+    ret(2, result_0.return2);
+    return result_0;
 }
 
 static inline void system_vsync_handler(void) {
