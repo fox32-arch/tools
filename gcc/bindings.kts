@@ -488,35 +488,48 @@ comment("fox32os definitions")
 comment("system jump table")
 
 define(0x00000810U, "get_os_version") {
+    returnstruct("return0", Type("struct return3"))
+    returnstruct("return1", Type("struct return3"))
+    returnstruct("return2", Type("struct return3"))
 }
 
 comment("FXF jump table")
 
 define(0x00000910U, "parse_fxf_binary") {
+    parameter(Byte.ref, "fxf_memory_buffer")
+    returns(Byte.ref)
 }
 
 comment("task jump table")
 
 define(0x00000A10U, "new_task") {
+    parameter(Byte, "task_id")
+    parameter(Byte.ref, "initial_instruction_pointer")
+    parameter(Byte.ref, "initial_stack_pointer")
+    parameter(Byte.ref, "code_block_to_free")
+    parameter(Byte.ref, "stack_block_to_free")
 }
-define(0x00000A14U, "yield_task") {
-}
-define(0x00000A18U, "end_current_task") {
-}
+define(0x00000A14U, "yield_task") {}
+define(0x00000A18U, "end_current_task") {}
 define(0x00000A1CU, "get_current_task_id") {
+    returns(Byte)
 }
 define(0x00000A20U, "get_unused_task_id") {
+    returns(Byte)
 }
 define(0x00000A24U, "is_task_id_used") {
+    // TODO: returning a value based on the Z flag
 }
-define(0x00000A28U, "save_state_and_yield_task") {
-}
+define(0x00000A28U, "save_state_and_yield_task") {}
 
 comment("memory jump table")
 
 define(0x00000B10U, "allocate_memory") {
+    parameter(Word, "bytes_to_allocate")
+    returns(Byte.ref)
 }
 define(0x00000B14U, "free_memory") {
+    parameter(Byte.ref, "allocated_block")
 }
 
 comment("window jump table")
@@ -535,6 +548,16 @@ define(0x00000C14U, "destroy_window") {
     parameter(Byte.ref, "window_struct")
 }
 define(0x00000C18U, "new_window_event") {
+    parameter(Word, "event_type")
+    parameter(Word, "parameter0")
+    parameter(Word, "parameter1")
+    parameter(Word, "parameter2")
+    parameter(Word, "parameter3")
+    parameter(Word, "parameter4")
+    parameter(Word, "parameter5")
+    parameter(Word, "parameter6")
+    parameter(Word, "parameter7")
+    parameter(Byte.ref, "window_struct")
 }
 define(0x00000C1CU, "get_next_window_event") {
     parameter(Byte.ref, "window_struct")
@@ -567,29 +590,54 @@ define(0x00000C30U, "start_dragging_window") {
     parameter(Byte.ref, "window_struct")
 }
 define(0x00000C34U, "new_messagebox") {
+    parameter(IByte.ref, "first_line_str")
+    parameter(IByte.ref, "second_line_str")
+    parameter(IByte.ref, "third_line_str")
+    parameter(Half, "x")
+    parameter(Half, "y")
+    parameter(Half, "width")
 }
 define(0x00000C38U, "get_active_window_struct") {
-    returns(Word.ref)
+    returns(Byte.ref)
 }
 
 comment("VFS jump table")
 
 define(0x00000D10U, "open") {
+    parameter(IByte.ref, "file_name")
+    parameter(Byte, "disk_id")
+    parameter(Byte.ref, "file_struct")
+    returns(Half)
 }
 define(0x00000D14U, "seek") {
+    parameter(Word, "offset")
+    parameter(Byte.ref, "file_struct")
 }
 define(0x00000D18U, "tell") {
+    parameter(Byte.ref, "file_struct")
+    returns(Word)
 }
 define(0x00000D1CU, "read") {
+    parameter(Word, "bytes_to_read")
+    parameter(Byte.ref, "file_struct")
+    parameter(Byte.ref, "destination_buffer")
+    returns(Word)
 }
 define(0x00000D20U, "write") {
+    parameter(Word, "bytes_to_write")
+    parameter(Byte.ref, "file_struct")
+    parameter(Byte.ref, "source_buffer")
 }
 
 comment("widget jump table")
 
 define(0x00000E10U, "draw_widgets_to_window") {
+    parameter(Byte.ref, "window_struct")
 }
 define(0x00000E14U, "handle_widget_click") {
+    parameter(Byte.ref, "window_struct")
+    parameter(Half, "x")
+    parameter(Half, "y")
 }
 
 comment("event types")

@@ -640,19 +640,41 @@ static inline unsigned int random_range(
 
 // system jump table
 
-static inline void get_os_version(void) {
+static inline struct return3 get_os_version(void) {
+    struct return3 result_0;
     call(0x00000810);
+    ret(0, result_0.return0);
+    ret(1, result_0.return1);
+    ret(2, result_0.return2);
+    return result_0;
 }
 
 // FXF jump table
 
-static inline void parse_fxf_binary(void) {
+static inline unsigned char* parse_fxf_binary(
+    unsigned char* fxf_memory_buffer
+) {
+    unsigned char* result_0;
+    parameter(0, fxf_memory_buffer);
     call(0x00000910);
+    ret(0, result_0);
+    return result_0;
 }
 
 // task jump table
 
-static inline void new_task(void) {
+static inline void new_task(
+    unsigned char task_id,
+    unsigned char* initial_instruction_pointer,
+    unsigned char* initial_stack_pointer,
+    unsigned char* code_block_to_free,
+    unsigned char* stack_block_to_free
+) {
+    parameter(0, task_id);
+    parameter(1, initial_instruction_pointer);
+    parameter(2, initial_stack_pointer);
+    parameter(3, code_block_to_free);
+    parameter(4, stack_block_to_free);
     call(0x00000A10);
 }
 
@@ -664,12 +686,18 @@ static inline void end_current_task(void) {
     call(0x00000A18);
 }
 
-static inline void get_current_task_id(void) {
+static inline unsigned char get_current_task_id(void) {
+    unsigned char result_0;
     call(0x00000A1C);
+    ret(0, result_0);
+    return result_0;
 }
 
-static inline void get_unused_task_id(void) {
+static inline unsigned char get_unused_task_id(void) {
+    unsigned char result_0;
     call(0x00000A20);
+    ret(0, result_0);
+    return result_0;
 }
 
 static inline void is_task_id_used(void) {
@@ -682,11 +710,20 @@ static inline void save_state_and_yield_task(void) {
 
 // memory jump table
 
-static inline void allocate_memory(void) {
+static inline unsigned char* allocate_memory(
+    unsigned int bytes_to_allocate
+) {
+    unsigned char* result_0;
+    parameter(0, bytes_to_allocate);
     call(0x00000B10);
+    ret(0, result_0);
+    return result_0;
 }
 
-static inline void free_memory(void) {
+static inline void free_memory(
+    unsigned char* allocated_block
+) {
+    parameter(0, allocated_block);
     call(0x00000B14);
 }
 
@@ -720,7 +757,28 @@ static inline void destroy_window(
     call(0x00000C14);
 }
 
-static inline void new_window_event(void) {
+static inline void new_window_event(
+    unsigned int event_type,
+    unsigned int parameter0,
+    unsigned int parameter1,
+    unsigned int parameter2,
+    unsigned int parameter3,
+    unsigned int parameter4,
+    unsigned int parameter5,
+    unsigned int parameter6,
+    unsigned int parameter7,
+    unsigned char* window_struct
+) {
+    parameter(0, event_type);
+    parameter(1, parameter0);
+    parameter(2, parameter1);
+    parameter(3, parameter2);
+    parameter(4, parameter3);
+    parameter(5, parameter4);
+    parameter(6, parameter5);
+    parameter(7, parameter6);
+    parameter(8, parameter7);
+    parameter(9, window_struct);
     call(0x00000C18);
 }
 
@@ -785,12 +843,25 @@ static inline void start_dragging_window(
     call(0x00000C30);
 }
 
-static inline void new_messagebox(void) {
+static inline void new_messagebox(
+    char* first_line_str,
+    char* second_line_str,
+    char* third_line_str,
+    unsigned short x,
+    unsigned short y,
+    unsigned short width
+) {
+    parameter(0, first_line_str);
+    parameter(1, second_line_str);
+    parameter(2, third_line_str);
+    parameter(3, x);
+    parameter(4, y);
+    parameter(5, width);
     call(0x00000C34);
 }
 
-static inline unsigned int* get_active_window_struct(void) {
-    unsigned int* result_0;
+static inline unsigned char* get_active_window_struct(void) {
+    unsigned char* result_0;
     call(0x00000C38);
     ret(0, result_0);
     return result_0;
@@ -798,33 +869,81 @@ static inline unsigned int* get_active_window_struct(void) {
 
 // VFS jump table
 
-static inline void open(void) {
+static inline unsigned short open(
+    char* file_name,
+    unsigned char disk_id,
+    unsigned char* file_struct
+) {
+    unsigned short result_0;
+    parameter(0, file_name);
+    parameter(1, disk_id);
+    parameter(2, file_struct);
     call(0x00000D10);
+    ret(0, result_0);
+    return result_0;
 }
 
-static inline void seek(void) {
+static inline void seek(
+    unsigned int offset,
+    unsigned char* file_struct
+) {
+    parameter(0, offset);
+    parameter(1, file_struct);
     call(0x00000D14);
 }
 
-static inline void tell(void) {
+static inline unsigned int tell(
+    unsigned char* file_struct
+) {
+    unsigned int result_0;
+    parameter(0, file_struct);
     call(0x00000D18);
+    ret(0, result_0);
+    return result_0;
 }
 
-static inline void read(void) {
+static inline unsigned int read(
+    unsigned int bytes_to_read,
+    unsigned char* file_struct,
+    unsigned char* destination_buffer
+) {
+    unsigned int result_0;
+    parameter(0, bytes_to_read);
+    parameter(1, file_struct);
+    parameter(2, destination_buffer);
     call(0x00000D1C);
+    ret(0, result_0);
+    return result_0;
 }
 
-static inline void write(void) {
+static inline void write(
+    unsigned int bytes_to_write,
+    unsigned char* file_struct,
+    unsigned char* source_buffer
+) {
+    parameter(0, bytes_to_write);
+    parameter(1, file_struct);
+    parameter(2, source_buffer);
     call(0x00000D20);
 }
 
 // widget jump table
 
-static inline void draw_widgets_to_window(void) {
+static inline void draw_widgets_to_window(
+    unsigned char* window_struct
+) {
+    parameter(0, window_struct);
     call(0x00000E10);
 }
 
-static inline void handle_widget_click(void) {
+static inline void handle_widget_click(
+    unsigned char* window_struct,
+    unsigned short x,
+    unsigned short y
+) {
+    parameter(0, window_struct);
+    parameter(1, x);
+    parameter(2, y);
     call(0x00000E14);
 }
 
