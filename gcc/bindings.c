@@ -98,7 +98,14 @@ static inline void draw_tile_generic(void) {
     call(0xF0041014);
 }
 
-static inline void set_tilemap(void) {
+static inline void set_tilemap(
+    unsigned char* tilemap,
+    unsigned short width,
+    unsigned short height
+) {
+    parameter(0, tilemap);
+    parameter(1, width);
+    parameter(2, height);
     call(0xF0041018);
 }
 
@@ -110,8 +117,13 @@ static inline void draw_filled_rectangle_generic(void) {
     call(0xF0041020);
 }
 
-static inline void get_tilemap(void) {
+static inline struct return3 get_tilemap(void) {
+    struct return3 result_0;
     call(0xF0041024);
+    ret(0, result_0.return0);
+    ret(1, result_0.return1);
+    ret(2, result_0.return2);
+    return result_0;
 }
 
 // background jump table

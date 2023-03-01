@@ -213,12 +213,18 @@ define(0xF0041010U, "draw_font_tile_generic") {
 define(0xF0041014U, "draw_tile_generic") {
 }
 define(0xF0041018U, "set_tilemap") {
+    parameter(Byte.ref, "tilemap")
+    parameter(Half, "width")
+    parameter(Half, "height")
 }
 define(0xF004101CU, "draw_pixel_generic") {
 }
 define(0xF0041020U, "draw_filled_rectangle_generic") {
 }
 define(0xF0041024U, "get_tilemap") {
+    returnstruct("return0", Type("struct return3"))
+    returnstruct("return1", Type("struct return3"))
+    returnstruct("return2", Type("struct return3"))
 }
 
 comment("background jump table")
