@@ -36,7 +36,7 @@ class GCC(Flavor):
 
     @classmethod
     def invoke(self, command, c_file, s_file):
-        run([command, '-march=rv32im', '-mabi=ilp32', '-Os', '-S', c_file, '-o', s_file])
+        run([command, '-march=rv32im', '-mabi=ilp32', '-O0', '-S', c_file, '-o', s_file])
 
 class GPlusPlus(GCC):
     basename = 'g++'
